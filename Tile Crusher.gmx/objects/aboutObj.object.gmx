@@ -30,7 +30,7 @@ version = "1.0";
 
 //contact info. should be able to tap these and pull up the appropriate page
 twitter = "@MikeADMurray";
-email = "mmking9999@gmail.com";
+email = "mikemurray056@gmail.com";
 website = "mmking9999.com";
 
 //set background 
@@ -119,6 +119,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
             {
+                sound_play(select);
                 global.nextScreen = helpScreen;
                 instance_create(0, 0, screenFadeObj);
             }

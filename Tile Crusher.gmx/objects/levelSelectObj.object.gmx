@@ -30,7 +30,7 @@ script_execute(setBackground, global.backgroundType);
 
 xOffset = 64;
 yOffset = 176;
-nextPage = false;   //used to display levels 51-100 when true.
+//nextPage = false;   //used to display levels 51-100 when true.
 
 //buttons
 
@@ -109,7 +109,7 @@ if (global.backgroundType == 0)
           <argument>
             <kind>1</kind>
             <string>levelCount = 1;
-if (nextPage)
+if (global.exPage)
 {
     levelCount = 51;
 }
@@ -161,7 +161,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
             {
-                
+                sound_play(select);
                 global.nextScreen = menuScreen;
                 instance_create(0, 0, screenFadeObj);
             }
@@ -174,7 +174,12 @@ if (!instance_exists(screenFadeObj))
             {
                if (mouse_y &gt;= nextButton.y &amp;&amp; mouse_y &lt;= nextButton.y + nextButton.sprite_height)
                {
-                   nextPage = !nextPage;
+                   sound_play(select);
+                   global.exPage = !global.exPage;
+                   var file = working_directory + "records.ini";
+                   ini_open(file);
+                   ini_write_real("Page State", "exPage", global.exPage);
+                   ini_close();
                }
             }
         }
@@ -193,25 +198,34 @@ if (!instance_exists(screenFadeObj))
                         
                         //is level locked?
                         k = ds_grid_get(numberGrid, i, j) - 1;
-                        if (!global.lockedLevel[k])
+                        if (!global.halfLevelsComplete)
                         {
-                        
-                            //player is no longer a first-time player
-                            if (global.firstTimePlaying)
+                            if (!global.lockedLevel[k])
                             {
-                                global.firstTimePlaying = false;
-                                ini_open(working_directory + "records.ini");
-                                ini_write_real("Progress", "firstTimePlaying", global.firstTimePlaying);
-                            }
                             
+                                //player is no longer a first-time player
+                                if (global.firstTimePlaying)
+                                {
+                                    global.firstTimePlaying = false;
+                                    ini_open(working_directory + "records.ini");
+                                    ini_write_real("Progress", "firstTimePlaying", global.firstTimePlaying);
+                                }
+                                sound_play(select);
+                                global.selectedLevel = ds_grid_get(numberGrid, i, j);
+                                global.nextScreen = gameScreen;
+                                instance_create(0, 0, screenFadeObj);
+                            }
+                            else
+                            {
+                                //play sound, level is locked.
+                                sound_play(noAccess);
+                            }
+                        }
+                        else    //all levels are unlocked, just go to level.
+                        {
                             global.selectedLevel = ds_grid_get(numberGrid, i, j);
                             global.nextScreen = gameScreen;
                             instance_create(0, 0, screenFadeObj);
-                        }
-                        else
-                        {
-                            //play sound, level is locked.
-                            sound_play(noAccess);
                         }
                     }
                 }
@@ -311,17 +325,31 @@ for (var i = 0; i &lt; ds_grid_width(levels); i++)
         
         //position numbers and change their colour according to their status.
         var p = ds_grid_get(numberGrid, i, j) - 1;
-        if (global.lockedLevel[p])
+        if (!global.halfLevelsComplete)
         {
-            draw_set_color(c_dkgray);
+            if (global.lockedLevel[p])
+            {
+                draw_set_color(c_dkgray);
+            }
+            else if (global.finishedLevel[p])
+            {
+                draw_set_color(c_aqua);
+            }
+            else  //level is available but hasn't been completed.
+            {
+                draw_set_color(c_white);
+            }
         }
-        else if (global.finishedLevel[p])
+        else
         {
-            draw_set_color(c_aqua);
-        }
-        else  //level is available but hasn't been completed.
-        {
-            draw_set_color(c_white);
+            if (global.finishedLevel[p])
+            {
+                draw_set_color(c_aqua);
+            }
+            else
+            {
+                draw_set_color(c_white);
+            }
         }
         
         

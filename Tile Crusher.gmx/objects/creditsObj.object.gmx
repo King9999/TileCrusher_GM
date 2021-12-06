@@ -109,6 +109,7 @@ if (!instance_exists(screenFadeObj))
        {
            if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
            {
+                sound_play(select);
                global.nextScreen = titleScreen;
                instance_create(0, 0, screenFadeObj);
            }

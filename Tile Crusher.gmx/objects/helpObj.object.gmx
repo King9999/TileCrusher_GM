@@ -44,6 +44,7 @@ recordReset = false;
 bgmChanged = false;
 alarm[0] = 120;      //timer for reset record display
 alarm[1] = 120;      //timer for bgm change display
+alarm[2] = 0;       //timer for record reset
 resetAlpha = 1;
 bgmAlpha = 1;
 
@@ -123,7 +124,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
             {
-                //room_goto(menuScreen);
+                sound_play(select);
                 global.nextScreen = menuScreen;
                 instance_create(0, 0, screenFadeObj);
             }
@@ -134,6 +135,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= bgButton.y &amp;&amp; mouse_y &lt;= bgButton.y + bgButton.sprite_height)
             {
+                sound_play(select);
                 if (global.backgroundType &lt; MAX_BACKGROUNDS - 1)
                 {
                     global.backgroundType++;
@@ -152,7 +154,7 @@ if (!instance_exists(screenFadeObj))
         {
            if (mouse_y &gt;= tutorialButton.y &amp;&amp; mouse_y &lt;= tutorialButton.y + tutorialButton.sprite_height)
            {
-               //room_goto(tutorialScreen);
+               sound_play(select);
                global.previousScreen = helpScreen;
                global.nextScreen = tutorialScreen;
                instance_create(0, 0, screenFadeObj);
@@ -164,14 +166,14 @@ if (!instance_exists(screenFadeObj))
         {
            if (mouse_y &gt;= aboutButton.y &amp;&amp; mouse_y &lt;= aboutButton.y + aboutButton.sprite_height)
            {
-               //room_goto(tutorialScreen);
+               sound_play(select);
                global.nextScreen = aboutScreen;
                instance_create(0, 0, screenFadeObj);
            }
         }
         
         //reset records
-        if (mouse_x &gt;= resetButton.x &amp;&amp; mouse_x &lt;= resetButton.x + resetButton.sprite_width)
+        /*if (mouse_x &gt;= resetButton.x &amp;&amp; mouse_x &lt;= resetButton.x + resetButton.sprite_width)
         {
             if (mouse_y &gt;= resetButton.y &amp;&amp; mouse_y &lt;= resetButton.y + resetButton.sprite_height)
             {
@@ -179,13 +181,14 @@ if (!instance_exists(screenFadeObj))
                 script_execute(resetRecords, file);
                 recordReset = true;
             }
-        }
+        }*/
         
         //change BGM
         if (mouse_x &gt;= bgmButton.x &amp;&amp; mouse_x &lt;= bgmButton.x + bgmButton.sprite_width)
         {
             if (mouse_y &gt;= bgmButton.y &amp;&amp; mouse_y &lt;= bgmButton.y + bgmButton.sprite_height)
             {
+                sound_play(select);
                 global.trackFile++;
                 if (global.trackFile &gt;= MAX_TRACKS)
                 {
@@ -198,6 +201,32 @@ if (!instance_exists(screenFadeObj))
         }
         
     }
+    
+    //press and hold button for at least 1 second to reset record
+    if (mouse_check_button(mb_left))
+    {
+        if (mouse_x &gt;= resetButton.x &amp;&amp; mouse_x &lt;= resetButton.x + resetButton.sprite_width)
+        {
+            if (mouse_y &gt;= resetButton.y &amp;&amp; mouse_y &lt;= resetButton.y + resetButton.sprite_height)
+            {
+                alarm[2]++;
+                if (alarm[2] &gt; 60)
+                {
+                    sound_play(win);
+                    var file = working_directory + "records.ini";
+                    script_execute(resetRecords, file);
+                    recordReset = true;
+                    alarm[2] = 0;
+                }
+            }
+        }       
+    }
+    else
+    {
+        alarm[2] = 0;
+    }
+    
+    show_debug_message("Record reset timer: " + string(alarm[2]));
 }
 </string>
           </argument>
@@ -302,6 +331,10 @@ if (bgmChanged)
 {
     draw_text_ext_color(room_width / 2 - 80, 30, "Now playing: " + trackName, 0, 600, c_lime, c_lime, c_lime, c_lime, bgmAlpha);
 }
+
+draw_set_font(recordFont);
+//draw_set_colour(c_red);
+draw_text(room_width / 3, 440, "Hold left mouse button #to reset progress");
 
 </string>
           </argument>

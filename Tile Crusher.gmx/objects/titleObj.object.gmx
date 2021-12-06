@@ -33,19 +33,19 @@ tilesComplete = false;      //when true, show buttons and legal string.
 musicPlaying = false;       //prevents music from playing in rapid succession.
 
 //set 1
-tileSet1[0] = instance_create(room_width / 3, -10, T_Obj);
-tileSet1[1] = instance_create(room_width / 3 + 50, -60, I_Obj);
-tileSet1[2] = instance_create(room_width / 3 + 100, -110, L_Obj);
-tileSet1[3] = instance_create(room_width / 3 + 150, -160, E_Obj);
+tileSet1[0] = instance_create(room_width / 5, -30, T_Obj);
+tileSet1[1] = instance_create(room_width / 5 + 110, -80, I_Obj);
+tileSet1[2] = instance_create(room_width / 5 + 220, -130, L_Obj);
+tileSet1[3] = instance_create(room_width / 5 + 330, -180, E_Obj);
 
 //set 2
-tileSet2[0] = instance_create(room_width / 3, room_height + 10, C_Obj);
-tileSet2[1] = instance_create(room_width / 3 + 50, room_height + 60, R_Obj);
-tileSet2[2] = instance_create(room_width / 3 + 100, room_height + 110, U_Obj);
-tileSet2[3] = instance_create(room_width / 3 + 150, room_height + 160, S_Obj);
-tileSet2[4] = instance_create(room_width / 3 + 200, room_height + 210, H_Obj);
-tileSet2[5] = instance_create(room_width / 3 + 250, room_height + 260, E_Obj);
-tileSet2[6] = instance_create(room_width / 3 + 300, room_height + 310, R_Obj);
+tileSet2[0] = instance_create(room_width / 5, room_height + 30, C_Obj);
+tileSet2[1] = instance_create(room_width / 5 + 110, room_height + 80, R_Obj);
+tileSet2[2] = instance_create(room_width / 5 + 220, room_height + 130, U_Obj);
+tileSet2[3] = instance_create(room_width / 5 + 330, room_height + 180, S_Obj);
+tileSet2[4] = instance_create(room_width / 5 + 440, room_height + 230, H_Obj);
+tileSet2[5] = instance_create(room_width / 5 + 550, room_height + 280, E_Obj);
+tileSet2[6] = instance_create(room_width / 5 + 660, room_height + 330, R_Obj);
 
 /*for (var i = 0; i &lt; 4; i++)
 {
@@ -67,8 +67,43 @@ creditsButton.visible = false;
 exitButton = instance_create(creditsButton.x + 150, creditsButton.y, exitBtnObj);
 exitButton.visible = false;
 
-//instance_create(100, 100, fireworkObj);
+//background. Starts off invisible, but will scroll.
+bg = instance_create(0, 0, bg4Obj);
+bgCopy = instance_create(0, -room_height, bg4Obj);
+bg.image_alpha = 0;
+bgCopy.image_alpha = 0;
 
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="3" enumb="2">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>if (bg.y &gt; room_height)
+{
+    bg.y = -room_height + 1;
+}
+
+if (bgCopy.y &gt; room_height)
+{
+    bgCopy.y = -room_height + 1;
+}
 </string>
           </argument>
         </arguments>
@@ -110,6 +145,16 @@ if (tilesComplete &amp;&amp; !sound_isplaying(Time_Flies_By))
     sound_loop(Time_Flies_By);
 }
 
+//fade in the background
+if (tilesComplete)
+{
+    bg.image_alpha += 0.03;
+    bgCopy.image_alpha += 0.03;
+    
+    if (bg.image_alpha &gt; 1) bg.image_alpha = 1;
+    if (bgCopy.image_alpha &gt; 1) bgCopy.image_alpha = 1;
+}
+
 
 </string>
           </argument>
@@ -133,18 +178,23 @@ if (tilesComplete &amp;&amp; !sound_isplaying(Time_Flies_By))
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>//move tiles to the center of the screen
+            <string>//update background
+bg.y++;
+bgCopy.y++;
+
+
+//move tiles to the center of the screen
 
 for (var i = 0; i &lt; array_length_1d(tileSet1); i++)
 {
 
-    if (tileSet1[i].y &gt;= room_height / 3)
+    if (tileSet1[i].y &gt;= room_height / 4)
     {
-        tileSet1[i].y = room_height / 3;
+        tileSet1[i].y = room_height / 4;
     }
     else
     {
-        tileSet1[i].y += 6;
+        tileSet1[i].y += 8;
     }
   
 }
@@ -159,7 +209,7 @@ for (var i = 0; i &lt; array_length_1d(tileSet2); i++)
     }
     else
     {
-        tileSet2[i].y -= 6;
+        tileSet2[i].y -= 8;
     }
 
 }
@@ -167,7 +217,7 @@ for (var i = 0; i &lt; array_length_1d(tileSet2); i++)
 //check for mouse input
 if (!instance_exists(screenFadeObj))
 {
-    if (mouse_check_button_released(mb_left))
+    if (mouse_check_button_pressed(mb_left))
     {
         tilesComplete = true;       //skips the tile animation.
         
@@ -177,7 +227,7 @@ if (!instance_exists(screenFadeObj))
             if (mouse_y &gt;= startButton.y &amp;&amp; mouse_y &lt;= startButton.y + startButton.sprite_height)
             {
                 show_debug_message("Clicked start button");
-                //room_goto(menuScreen);
+                sound_play(select);
                 global.nextScreen = menuScreen;
                 instance_create(0, 0, screenFadeObj);
             }
@@ -188,8 +238,21 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= creditsButton.y &amp;&amp; mouse_y &lt;= creditsButton.y + creditsButton.sprite_height)
             {
-                global.nextScreen = creditsScreen;
-                instance_create(0, 0, screenFadeObj);
+                sound_play(select);
+                var file = working_directory + "records.ini";
+                ini_open(file);
+                global.allLevelsComplete = ini_read_real("Progress", "gameFinished", 0);
+                ini_close();
+                if (global.allLevelsComplete)
+                {
+                    global.nextScreen = endingScreen;
+                    instance_create(0, 0, screenFadeObj);
+                }
+                else
+                {
+                    global.nextScreen = creditsScreen;
+                    instance_create(0, 0, screenFadeObj);
+                }
             }
         }
         
@@ -198,6 +261,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= exitButton.y &amp;&amp; mouse_y &lt;= exitButton.y + exitButton.sprite_height)
             {
+                sound_play(select);
                 game_end();
             }
         }     

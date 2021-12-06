@@ -46,6 +46,7 @@ totalTiles = 0;
 tutorialButton = instance_create(room_width / 3 - 60, room_height - 120, tutorialBtnObj);
 bgmButton = instance_create(tutorialButton.x + 150, room_height - 120, bgmBtnObj);
 backButton = instance_create(bgmButton.x + 150, room_height - 120, levelBtnObj);
+restartButton = instance_create(backButton.x + 150, room_height - 120, restartBtnObj);
 
 levelGrid = ds_grid_create(MAX_ROWS, MAX_COLS);
 levelCopy = ds_grid_create(MAX_ROWS, MAX_COLS);     //used to reset level
@@ -73,6 +74,7 @@ bgmChanged = false;
 trackName = "";
 bgmAlpha = 1;
 soundPlaying = false;       //prevents SFX from playing multiple times.
+cheerSoundPlaying = false;  //same
 
 //timer setup
 hours = global.hours;
@@ -116,8 +118,8 @@ if (file_exists(file))
                 //empty tile
                 case EMPTY: 
                     ds_grid_set(tileGrid, i, j, instance_create(TILE_SIZE * j + xOffset, TILE_SIZE * i + yOffset, emptyObj));
-                    totalTiles++;
-                    tilesCrushed++;
+                    //totalTiles++;
+                    //tilesCrushed++;
                     break;
                     
                 //normal tile
@@ -442,6 +444,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
             part_particles_create(partSystem, currentCol + (TILE_SIZE / 2), currentRow + (TILE_SIZE / 2), restoreParticle, 1);
             sound_play(tileRestore);
             tilesCrushed--;
+            totalTiles++;
             if (tilesCrushed &lt; 0)
             {
                 tilesCrushed = 0;   //there's a trick player can use when crush count is 0.
@@ -454,6 +457,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
             part_particles_create(partSystem, currentCol + (TILE_SIZE / 2), currentRow + (TILE_SIZE / 2), crushParticle, 15);
             sound_play(tileBreak);
             tilesCrushed++;
+            totalTiles--;
             global.crushTotal++;
             break;   
             
@@ -482,6 +486,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
                 part_type_color1(crushParticle, c_white);
                 sound_play(tileBreak);
                 tilesCrushed++;
+                totalTiles--;
                 global.crushTotal++;
             }
             else
@@ -499,6 +504,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
                     part_particles_create(partSystem, currentCol + (TILE_SIZE / 2), i * TILE_SIZE + yOffset + (TILE_SIZE / 2), crushParticle, 15);
                     sound_play(tileBreak);
                     tilesCrushed++;
+                    totalTiles--;
                     global.crushTotal++;
                 }
                 else if (ds_grid_get(levelGrid, i, playerCol) == EMPTY)
@@ -507,6 +513,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
                      part_particles_create(partSystem, currentCol + (TILE_SIZE / 2), i * TILE_SIZE + yOffset + (TILE_SIZE / 2), restoreParticle, 1);
                      sound_play(tileRestore);
                      tilesCrushed--;
+                     totalTiles++;
                      if (tilesCrushed &lt; 0)
                      {
                         tilesCrushed = 0;
@@ -522,6 +529,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
                     part_particles_create(partSystem, j * TILE_SIZE + xOffset + (TILE_SIZE / 2), currentRow + (TILE_SIZE / 2), crushParticle, 15);
                     sound_play(tileBreak);
                     tilesCrushed++;
+                    totalTiles--;
                     global.crushTotal++;
                 }
                 else if (ds_grid_get(levelGrid, playerRow, j) == EMPTY)
@@ -530,6 +538,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
                      part_particles_create(partSystem, j * TILE_SIZE + xOffset + (TILE_SIZE / 2), currentRow + (TILE_SIZE / 2), restoreParticle, 1);
                      sound_play(tileRestore);
                      tilesCrushed--;
+                     totalTiles++;
                      if (tilesCrushed &lt; 0)
                      {
                         tilesCrushed = 0;
@@ -544,7 +553,7 @@ if (!ds_grid_get(boolGrid, playerRow, playerCol))
 }
 
 //is game over?
-if (tilesCrushed == totalTiles)
+if (totalTiles &lt;= 0)
 {
     levelComplete = true;
 }
@@ -605,40 +614,19 @@ if (timerActivated)
 //are we leaving the level?
 if (alarm[0] &gt; 120 &amp;&amp; !exitingLevel)
 {
-    /*if (sound_isplaying(smallCheer))
-    {
-        sound_stop(smallCheer);
-    }*/
+   
     exitingLevel = true;    //this is here to prevent this code block from occurring more than once.
     show_debug_message("Level finished");
-    
-    //save all data
-    var file = working_directory + "records.ini";
-    
-    if (levelComplete &amp;&amp; !global.finishedLevel[level - 1])
-    {
-        //add to completion
-        global.finishedLevel[level - 1] = true;
-        global.levelsFinished++;
-        global.completionRate = global.levelsFinished / MAX_LEVELS * 100;
-        
-        //prevent player from completing a previously completed level to unlock levels.
-        if (global.levelsFinished % 5 != 0)
-        {
-            levelsUnlocked = false;
-        }
-         
-    }
-    else if (levelFailed)
-    {
-        global.lossTotal++;
-        show_debug_message("added to loss");
-    }
+    //global.levelsFinished = 100;
+    //global.allLevelsComplete = true;
     
     //do more levels need to be unlocked?
     if (!global.isDemo)
     {
-        if (levelComplete &amp;&amp; global.levelsFinished &gt; 0 &amp;&amp; global.levelsFinished &lt;= 45
+        if (levelComplete &amp;&amp; !global.finishedLevel[level - 1])
+        {
+            global.levelsFinished++;
+            if (global.levelsFinished &gt; 0 &amp;&amp; global.levelsFinished &lt;= 45
             &amp;&amp; global.levelsFinished % 5 == 0 &amp;&amp; !levelsUnlocked)
             {
                 //iterate through the array and unlock more levels until 5 more are unlocked
@@ -657,10 +645,14 @@ if (alarm[0] &gt; 120 &amp;&amp; !exitingLevel)
 
                 levelsUnlocked = true;
             }
+        }
     }
     else //it's a demo, only 20 levels are unlocked max.
     {
-         if (levelComplete &amp;&amp; global.levelsFinished &gt; 0 &amp;&amp; global.levelsFinished &lt;= 15
+        if (levelComplete &amp;&amp; !global.finishedLevel[level - 1])
+        {
+            global.levelsFinished++;
+            if (global.levelsFinished &gt; 0 &amp;&amp; global.levelsFinished &lt;= 15
             &amp;&amp; global.levelsFinished % 5 == 0 &amp;&amp; !levelsUnlocked)
             {
                 //iterate through the array and unlock more levels until 5 more are unlocked
@@ -679,7 +671,41 @@ if (alarm[0] &gt; 120 &amp;&amp; !exitingLevel)
 
                 levelsUnlocked = true;
             }
+        }
     }
+    
+    //save all data
+    var file = working_directory + "records.ini";
+    
+    if (levelComplete &amp;&amp; !global.finishedLevel[level - 1])
+    {
+        //add to completion
+        global.finishedLevel[level - 1] = true;
+        global.completionRate = global.levelsFinished / MAX_LEVELS * 100;
+        
+        //prevent player from completing a previously completed level to unlock levels.
+        if (global.levelsFinished % 5 != 0)
+        {
+            levelsUnlocked = false;
+        }
+        
+        //unlock the next set of levels if 50% are complete.
+        if (global.levelsFinished &gt;= 50)
+        {
+            global.halfLevelsComplete = true;
+        }
+        
+       
+         
+    }
+    else if (levelFailed)
+    {
+        global.lossTotal++;
+        show_debug_message("added to loss");
+    }
+    
+    
+    
     
     //timer update
     global.hours = hours;
@@ -689,9 +715,58 @@ if (alarm[0] &gt; 120 &amp;&amp; !exitingLevel)
     script_execute(writeRecords, file);
     
     
-    //leave level
-    global.nextScreen = levelSelectScreen;
-    instance_create(0, 0, screenFadeObj);
+    //leave level. If it's a demo, show splash screen if player beat all 20 levels.
+    if (global.isDemo)
+    {
+        var k = 0;
+        var demoIncomplete = false;
+        while (k &lt; 20 &amp;&amp; !demoIncomplete)
+        {
+            if (global.finishedLevel[k] == true)
+            {
+                k++;
+            }
+            else
+            {
+                demoIncomplete = true;
+            }
+        }
+        
+        if (!demoIncomplete)
+        {
+            //show splash screen
+            global.nextScreen = demoSplashScreen;
+            instance_create(0, 0, screenFadeObj);
+        }
+        else
+        {
+            global.nextScreen = levelSelectScreen;
+            instance_create(0, 0, screenFadeObj);
+        }    
+    }
+    else
+    {
+         //go to ending screen if all levels complete. Should only occur once, but player
+         //can view the ending again in the credits screen.
+         if (!global.allLevelsComplete &amp;&amp; global.levelsFinished &gt;= 100)
+         {
+            global.allLevelsComplete = true;
+            //var file = working_directory + "records.ini";
+            ini_open(file);
+            ini_write_real("Progress", "gameFinished", global.allLevelsComplete);
+            ini_close();
+            
+            global.nextScreen = endingScreen;
+            instance_create(0, 0, screenFadeObj);
+         }
+         else
+         {
+            global.nextScreen = levelSelectScreen;
+            instance_create(0, 0, screenFadeObj);
+         }
+    }
+    
+   
 }  
 </string>
           </argument>
@@ -771,6 +846,7 @@ if (!instance_exists(screenFadeObj) &amp;&amp; !levelFailed &amp;&amp; !levelCom
         {
             if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
             {
+                sound_play(select);
                 var file = working_directory + "records.ini";
                 
                 //did player already beat this level?
@@ -797,6 +873,7 @@ if (!instance_exists(screenFadeObj) &amp;&amp; !levelFailed &amp;&amp; !levelCom
         {
             if (mouse_y &gt;= tutorialButton.y &amp;&amp; mouse_y &lt;= tutorialButton.y + tutorialButton.sprite_height)
             {
+                sound_play(select);
                 room_persistent = true; //don't kill this screen.
                 global.previousScreen = gameScreen;
                 global.nextScreen = tutorialScreen;
@@ -809,6 +886,7 @@ if (!instance_exists(screenFadeObj) &amp;&amp; !levelFailed &amp;&amp; !levelCom
         {
            if (mouse_y &gt;= bgmButton.y &amp;&amp; mouse_y &lt;= bgmButton.y + bgmButton.sprite_height)
            {
+                sound_play(select);
                 global.trackFile++;
                 if (global.trackFile &gt;= MAX_TRACKS)
                 {
@@ -817,6 +895,18 @@ if (!instance_exists(screenFadeObj) &amp;&amp; !levelFailed &amp;&amp; !levelCom
                 trackName = script_execute(changeBgm, global.trackFile);
                 bgmChanged = true;
                 alarm[4] = 0;
+           }
+        }
+        
+        //restart
+        if (mouse_x &gt;= restartButton.x &amp;&amp; mouse_x &lt;= restartButton.x + restartButton.sprite_width)
+        {
+           if (mouse_y &gt;= restartButton.y &amp;&amp; mouse_y &lt;= restartButton.y + restartButton.sprite_height)
+           {
+                //simply reload the game screen, level was set previously.
+                sound_play(select);
+               global.nextScreen = gameScreen;
+               instance_create(0, 0, screenFadeObj);
            }
         }       
     }
@@ -1044,29 +1134,44 @@ if (levelComplete)
     alarm[3]++;
     if (alarm[3] &gt; 30)
     {
-        if (level &gt;= 10)
-        {
-            sound_play(smallCheer);
-            /*sound_play(fireworks); 
-            effect_create_above(ef_firework, floor(random(room_width)), floor(random(room_height)), 0, 
-                make_colour_rgb(floor(random(256)), floor(random(256)), floor(random(256))));*/
+        if (level &gt;= 50)
+        {         
+            if (!cheerSoundPlaying)
+            {
+                sound_play(bigCheer);
+                sound_play(fireworks);
+                cheerSoundPlaying = true;
+            } 
+            effect_create_above(ef_firework, floor(random(room_width)), floor(random(room_height)), 2, 
+                make_colour_rgb(floor(random(256)), floor(random(256)), floor(random(256))));
         }
         
         else if (level &gt;= 30)
         {
-            sound_play(smallCheer);
-            sound_play(fireworks); 
+            if (!cheerSoundPlaying)
+            {
+                sound_play(smallCheer);
+                sound_play(fireworks);
+                cheerSoundPlaying = true;
+            } 
             effect_create_above(ef_firework, floor(random(room_width)), floor(random(room_height)), 1, 
                 make_colour_rgb(floor(random(256)), floor(random(256)), floor(random(256))));
+            
         }
         
-        else if (level &gt;= 50)
-        {         
-            sound_play(bigCheer); 
-            sound_play(fireworks); 
-            effect_create_above(ef_firework, floor(random(room_width)), floor(random(room_height)), 2, 
-                make_colour_rgb(floor(random(256)), floor(random(256)), floor(random(256))));
+        else if (level &gt;= 10)
+        {
+            if (!cheerSoundPlaying)
+            {
+                sound_play(smallCheer);
+                cheerSoundPlaying = true;
+            }
+            /*sound_play(fireworks); 
+            effect_create_above(ef_firework, floor(random(room_width)), floor(random(room_height)), 0, 
+                make_colour_rgb(floor(random(256)), floor(random(256)), floor(random(256))));*/
         }
+              
+        
         alarm[3] = 0;
     }
        
@@ -1254,8 +1359,8 @@ if (!room_persistent)
     }
 }
 
-sound_stop(smallCheer);
-sound_stop(bigCheer);
+//sound_stop(smallCheer);
+//sound_stop(bigCheer);
 sound_stop(fireworks);
 </string>
           </argument>
@@ -1320,19 +1425,20 @@ if (part_system_exists(partSystem))
             <kind>1</kind>
             <string>draw_set_font(gameFont);
 draw_set_color(c_white);
-draw_text(120, 80, "Level " + string(level));
-draw_text(320, 80, "Turns:");
-draw_text(520, 80, "Tiles Crushed: " + string(tilesCrushed) + "/" + string(totalTiles));
+draw_text(80, 80, "Level " + string(level));
+draw_text(280, 80, "Turns:");
+draw_text(480, 80, "Crushed: " + string(tilesCrushed));
+draw_text(680, 80, "Remaining: " + string(totalTiles));
 
 //draw turn count in red if it's almost 0
 if (turnCount &lt;= 5)
 {
     draw_set_color(c_red);
-    draw_text(410, 80, string(turnCount));
+    draw_text(370, 80, string(turnCount));
 }
 else
 {   
-    draw_text(410, 80, string(turnCount));
+    draw_text(370, 80, string(turnCount));
 }
 
 if (bgmChanged)

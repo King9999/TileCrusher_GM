@@ -16,8 +16,10 @@ global.trackFile = ini_read_real("Music", "track", 0);
 global.firstTimePlaying = ini_read_real("Progress", "firstTimePlaying", 1);
 global.halfLevelsComplete = ini_read_real("Progress", "halfwayPoint", 0);
 global.backgroundType = ini_read_real("Background", "type", 0);
+global.exPage = ini_read_real("Page State", "exPage", 0);
+global.allLevelsComplete = ini_read_real("Progress", "gameFinished", 0);
 
-for (var i = 0; i < MAX_LEVELS / 2; i++)
+for (var i = 0; i < MAX_LEVELS; i++)
 {
     global.finishedLevel[i] = ini_read_real("Completed Levels", "level" + string(i+1), false);
     

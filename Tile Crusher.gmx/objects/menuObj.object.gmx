@@ -188,6 +188,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= helpButton.y &amp;&amp; mouse_y &lt;= helpButton.y + helpButton.sprite_height)
             {
+                sound_play(select);
                 show_debug_message("Moving to help screen");
                 //room_goto(helpScreen);
                 global.nextScreen = helpScreen;
@@ -200,6 +201,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= backButton.y &amp;&amp; mouse_y &lt;= backButton.y + backButton.sprite_height)
             {
+                sound_play(select);
                 global.nextScreen = titleScreen;
                 instance_create(0, 0, screenFadeObj);
             }
@@ -210,6 +212,7 @@ if (!instance_exists(screenFadeObj))
         {
             if (mouse_y &gt;= levelButton.y &amp;&amp; mouse_y &lt;= levelButton.y + levelButton.sprite_height)
             {
+                sound_play(select);
                 global.nextScreen = levelSelectScreen;
                 instance_create(0, 0, screenFadeObj);
             }
